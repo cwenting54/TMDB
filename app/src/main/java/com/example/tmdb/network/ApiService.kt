@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit
 
 object ApiService {
     private val BASE_URL = BuildConfig.BASE_URL
-    private val IMAGE_URL = BuildConfig.IMAGE_URL
     private val API_KEY = BuildConfig.API_KEY
 
     private val gson: Gson by lazy { GsonBuilder().create() }
@@ -24,14 +23,15 @@ object ApiService {
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })
+            .addInterceptor(ApiKeyInterceptor(API_KEY))
             .build()
     }
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(okHttp)
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
