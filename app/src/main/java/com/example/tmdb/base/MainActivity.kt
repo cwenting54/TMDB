@@ -13,6 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.tmdb.ui.screen.movie.MOVIE_SCREEN_KEY_ID
 import com.example.tmdb.ui.screen.movie.movieScreenRoute
+import com.example.tmdb.ui.screen.movieDetail.generateMovieDetailScreenRoute
+import com.example.tmdb.ui.screen.movieDetail.movieDetailScreenRoute
 import com.example.tmdb.ui.theme.TMDBTheme
 
 class MainActivity : ComponentActivity() {
@@ -43,7 +45,8 @@ fun TmdbNavHost(
         navController = navController,
         startDestination = MOVIE_SCREEN_KEY_ID
     ) {
-        movieScreenRoute(navigateToMoviesDetail = { })
+        movieScreenRoute(navigateToMoviesDetail = { navController.navigate(generateMovieDetailScreenRoute(it) )})
+        movieDetailScreenRoute(navController)
     }
 
 }

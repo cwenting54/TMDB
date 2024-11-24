@@ -1,7 +1,6 @@
 package com.example.tmdb.ui.screen.movie
 
-import android.util.Log
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,20 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import com.example.tmdb.BuildConfig
 import com.example.tmdb.R
 import com.example.tmdb.model.MoviesDetails
+import com.example.tmdb.network.ImageApi
 
 
 @Composable
 fun MoviesRoute(
     moviesViewModel: MoviesViewModel = viewModel(),
-    onItemClick: (MoviesDetails) -> Unit = {}
+    onItemClick: (Int) -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
         moviesViewModel.fetchMovies()
@@ -62,13 +60,11 @@ fun MoviesRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoviesScreen(
-    modifier: Modifier = Modifier,
     isLoading: Boolean = true,
     errorMessage: String?,
     moviesResponse: List<MoviesDetails>? = listOf(),
-    onItemClick: (MoviesDetails) -> Unit = {}
+    onItemClick: (Int) -> Unit = {}
 ) {
-
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.movieList)) })
@@ -81,7 +77,7 @@ fun MoviesScreen(
                 Text(text = "Error: $errorMessage", modifier = Modifier.align(Alignment.Center))
             } else {
                 moviesResponse?.let { movies ->
-                    MovieList(movies)
+                    MovieList(movies, onItemClick)
                 } ?: run {
                     Text(text = "No movies available", modifier = Modifier.align(Alignment.Center))
                 }
@@ -91,24 +87,24 @@ fun MoviesScreen(
 }
 
 @Composable
-fun MovieList(movies: List<MoviesDetails>) {
+fun MovieList(movies: List<MoviesDetails>,  onItemClick: (Int) -> Unit) {
     LazyColumn {
         items(movies) { movie ->
-            MovieItem(movie)
+            MovieItem(movie, onItemClick = onItemClick)
         }
     }
 }
 
 @Composable
-fun MovieItem(movie: MoviesDetails) {
+fun MovieItem(movie: MoviesDetails, onItemClick: (Int) -> Unit) {
     Column(
         modifier = Modifier
+            .clickable { onItemClick(movie.id) }
             .padding(16.dp)
             .fillMaxWidth()
     ) {
-        val imageUrl = "${BuildConfig.IMAGE_URL}/w200${movie.posterPath}"
         AsyncImage(
-            model = imageUrl,
+            model = ImageApi.getImageUrl(movie.posterPath),
             contentDescription = stringResource(R.string.moviePhoto),
             modifier = Modifier
                 .fillMaxWidth()
