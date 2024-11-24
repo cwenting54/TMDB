@@ -4,4 +4,5 @@
     <string name="moviePhoto">電影照片</string>
     <string name="favorite">喜愛電影</string>
     <string name="movieDetail">電影資訊</string>
+    <string name="backPage">上一頁</string>
 </resources>

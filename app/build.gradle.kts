@@ -36,12 +36,16 @@ android {
         }
 
         val apiKey = properties.getProperty("apiKey") ?: throw GradleException("local.properties中的apiKey未設置")
+        val accountId = properties.getProperty("accountId") ?: throw GradleException("local.properties中的accountId未設置")
+        val sessionId = properties.getProperty("sessionId") ?: throw GradleException("local.properties中的sessionId未設置")
 
 
         debug {
             buildConfigField("String", "BASE_URL", Config.BASE_URL)
             buildConfigField("String", "IMAGE_URL", Config.IMAGE_URL)
             buildConfigField("String", "API_KEY", "$apiKey")
+            buildConfigField("String", "accountId", "$accountId")
+            buildConfigField("String", "sessionId", "$sessionId")
         }
         release {
             isMinifyEnabled = false

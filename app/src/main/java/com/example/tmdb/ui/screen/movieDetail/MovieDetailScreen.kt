@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -32,11 +35,13 @@ import coil.compose.AsyncImage
 import com.example.tmdb.R
 import com.example.tmdb.model.MoviesDetails
 import com.example.tmdb.network.ImageApi
+import com.example.tmdb.ui.screen.favoriteMovie.FavoriteMovieViewModel
 
 
 @Composable
 fun MovieDetailRoute(
     movieDetailViewModel: MovieDetailViewModel = viewModel(),
+    favoriteMovieViewModel: FavoriteMovieViewModel,
     movieId: Int,
     navController: NavHostController
 ) {
@@ -44,12 +49,28 @@ fun MovieDetailRoute(
         movieDetailViewModel.fetchMovieDetail(movieId)
     }
     val moviesDetail by movieDetailViewModel.moviesDetail.collectAsState()
-    MovieDetailScreen(moviesDetail, navController = navController)
+    MovieDetailScreen(
+        moviesDetail,
+        navController = navController,
+        favoriteMovieViewModel = favoriteMovieViewModel
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MovieDetailScreen(moviesDetail: MoviesDetails?, navController: NavHostController) {
+fun MovieDetailScreen(
+    moviesDetail: MoviesDetails?,
+    navController: NavHostController,
+    favoriteMovieViewModel: FavoriteMovieViewModel
+) {
+    val isFavor =
+        remember { mutableStateOf(moviesDetail?.id?.let { favoriteMovieViewModel.isMovieFavorited(it) }) }
+
+    LaunchedEffect(moviesDetail?.id) {
+        moviesDetail?.id?.let {
+            isFavor.value = favoriteMovieViewModel.isMovieFavorited(it)
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,7 +79,7 @@ fun MovieDetailScreen(moviesDetail: MoviesDetails?, navController: NavHostContro
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             painter = painterResource(R.drawable.arrow_back_ios_new_24),
-                            contentDescription = "返回"
+                            contentDescription = stringResource(R.string.backPage)
                         )
                     }
                 })
@@ -93,9 +114,15 @@ fun MovieDetailScreen(moviesDetail: MoviesDetails?, navController: NavHostContro
             Text(
                 text = moviesDetail?.overview ?: "",
             )
-            IconButton(onClick = { /* TODO: 添加點擊事件 */ }) {
+            IconButton(onClick = {
+                moviesDetail?.id?.let { movieId ->
+                    val newFavorState = !(isFavor.value ?: false)
+                    favoriteMovieViewModel.toggleFavoriteMovie(movieId, newFavorState)
+                    isFavor.value = newFavorState
+                }
+            }) {
                 Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
+                    imageVector = if (isFavor.value == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = stringResource(R.string.favorite),
                     tint = Color.Red
                 )

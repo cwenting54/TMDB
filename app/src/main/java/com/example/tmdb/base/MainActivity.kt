@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import com.example.tmdb.ui.screen.favoriteMovie.FavoriteMovieViewModel
 import com.example.tmdb.ui.screen.movie.MOVIE_SCREEN_KEY_ID
 import com.example.tmdb.ui.screen.movie.movieScreenRoute
 import com.example.tmdb.ui.screen.movieDetail.generateMovieDetailScreenRoute
@@ -37,7 +39,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TmdbNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    favoriteMovieViewModel: FavoriteMovieViewModel = viewModel()
 ) {
 
     NavHost(
@@ -45,8 +48,12 @@ fun TmdbNavHost(
         navController = navController,
         startDestination = MOVIE_SCREEN_KEY_ID
     ) {
-        movieScreenRoute(navigateToMoviesDetail = { navController.navigate(generateMovieDetailScreenRoute(it) )})
-        movieDetailScreenRoute(navController)
+        movieScreenRoute(navigateToMoviesDetail = {
+            navController.navigate(
+                generateMovieDetailScreenRoute(it)
+            )
+        }, favoriteMovieViewModel = favoriteMovieViewModel)
+        movieDetailScreenRoute(navController, favoriteMovieViewModel = favoriteMovieViewModel)
     }
 
 }

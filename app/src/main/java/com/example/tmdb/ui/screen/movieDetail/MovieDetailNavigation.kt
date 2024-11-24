@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.tmdb.ui.screen.favoriteMovie.FavoriteMovieViewModel
 
 const val MOVIE_DETAIL_SCREEN_KEY_ID = "movieDetail"
 
@@ -17,7 +18,7 @@ fun generateMovieDetailScreenRoute(movieId: Int): String {
     return "$MOVIE_DETAIL_SCREEN_KEY_ID?$MOVIE_DETAIL_SCREEN_ARGS_KEY=$movieId"
 }
 
-fun NavGraphBuilder.movieDetailScreenRoute(navController: NavHostController) {
+fun NavGraphBuilder.movieDetailScreenRoute(navController: NavHostController, favoriteMovieViewModel:FavoriteMovieViewModel) {
     composable(
         route = MOVIE_DETAIL_SCREEN_ROUTE,
         arguments = listOf(
@@ -25,6 +26,6 @@ fun NavGraphBuilder.movieDetailScreenRoute(navController: NavHostController) {
         )
     ) { backStackEntry ->
         val movieId = backStackEntry.arguments?.getInt(MOVIE_DETAIL_SCREEN_ARGS_KEY) ?: 0
-        MovieDetailRoute(movieId = movieId, navController = navController)
+        MovieDetailRoute(movieId = movieId, navController = navController, favoriteMovieViewModel = favoriteMovieViewModel)
     }
 }
