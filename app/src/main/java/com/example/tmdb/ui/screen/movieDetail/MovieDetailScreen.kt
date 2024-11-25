@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -63,12 +64,11 @@ fun MovieDetailScreen(
     navController: NavHostController,
     favoriteMovieViewModel: FavoriteMovieViewModel
 ) {
-    val isFavor =
-        remember { mutableStateOf(moviesDetail?.id?.let { favoriteMovieViewModel.isMovieFavorited(it) }) }
+    var isFavor by remember { mutableStateOf(false) }
 
     LaunchedEffect(moviesDetail?.id) {
         moviesDetail?.id?.let {
-            isFavor.value = favoriteMovieViewModel.isMovieFavorited(it)
+            isFavor = favoriteMovieViewModel.isMovieFavorited(it)
         }
     }
     Scaffold(
@@ -116,13 +116,13 @@ fun MovieDetailScreen(
             )
             IconButton(onClick = {
                 moviesDetail?.id?.let { movieId ->
-                    val newFavorState = !(isFavor.value ?: false)
+                    val newFavorState = !(isFavor ?: false)
                     favoriteMovieViewModel.toggleFavoriteMovie(movieId, newFavorState)
-                    isFavor.value = newFavorState
+                    isFavor = newFavorState
                 }
             }) {
                 Icon(
-                    imageVector = if (isFavor.value == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    imageVector = if (isFavor == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = stringResource(R.string.favorite),
                     tint = Color.Red
                 )

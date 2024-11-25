@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MoviesViewModel : ViewModel() {
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading = _isLoading.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
@@ -19,9 +17,12 @@ class MoviesViewModel : ViewModel() {
     private val _moviesList = MutableStateFlow<MoviesResponse?>(null)
     val moviesList = _moviesList.asStateFlow()
 
+    init {
+        fetchMovies()
+    }
+
     fun fetchMovies() {
         viewModelScope.launch {
-            _isLoading.value = true
             _errorMessage.value = null
 
             try {
@@ -29,7 +30,6 @@ class MoviesViewModel : ViewModel() {
             } catch (e: Exception) {
                 _errorMessage.value = e.message
             } finally {
-                _isLoading.value = false
             }
         }
     }

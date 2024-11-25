@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,7 +54,7 @@ fun MoviesRoute(
     LaunchedEffect(Unit) {
         moviesViewModel.fetchMovies()
     }
-    val isLoading by moviesViewModel.isLoading.collectAsState()
+    val isLoading by favoriteMovieViewModel.isLoading.collectAsState()
     val moviesResponse by moviesViewModel.moviesList.collectAsState()
     val errorMessage by moviesViewModel.errorMessage.collectAsState()
 
@@ -83,7 +84,7 @@ fun MoviesScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).padding(20.dp))
             } else if (errorMessage != null) {
                 Text(text = "Error: $errorMessage", modifier = Modifier.align(Alignment.Center))
             } else {
@@ -132,10 +133,9 @@ fun MovieItem(
     onItemClick: (Int) -> Unit,
     favoriteMovieViewModel: FavoriteMovieViewModel
 ) {
-    val isFavor = remember { mutableStateOf(favoriteMovieViewModel.isMovieFavorited(movie.id)) }
-
-    LaunchedEffect(movie.id) {
-        isFavor.value = favoriteMovieViewModel.isMovieFavorited(movie.id)
+    var isFavor by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isFavor = favoriteMovieViewModel.isMovieFavorited(movie.id)
     }
 
     Card(
@@ -156,16 +156,16 @@ fun MovieItem(
             )
             IconButton(
                 onClick = {
-                    val newFavorState = !isFavor.value
+                    val newFavorState = !isFavor
                     favoriteMovieViewModel.toggleFavoriteMovie(movie.id, newFavorState)
-                    isFavor.value = newFavorState
+                    isFavor = newFavorState
                 },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top=8.dp)
             ) {
                 Icon(
-                    imageVector = if (isFavor.value) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    imageVector = if (isFavor) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = stringResource(R.string.favorite),
                     tint = Color.Red,
                     modifier = Modifier.size(40.dp)
