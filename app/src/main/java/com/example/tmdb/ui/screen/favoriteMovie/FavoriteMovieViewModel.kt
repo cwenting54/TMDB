@@ -8,14 +8,14 @@ import com.example.tmdb.model.FavoriteMovieRequest
 import com.example.tmdb.model.MoviesDetails
 import com.example.tmdb.network.ApiInterface
 import com.example.tmdb.network.ApiService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class FavoriteMovieViewModel : ViewModel() {
     private val _favoriteList = MutableStateFlow(emptyList<MoviesDetails>())
+    val favoriteList: StateFlow<List<MoviesDetails>> = _favoriteList.asStateFlow()
     private val accountId = BuildConfig.accountId.toInt()
     private val sessionId = BuildConfig.sessionId
 
@@ -26,15 +26,8 @@ class FavoriteMovieViewModel : ViewModel() {
         fetchFavoriteMovies()
     }
 
-    suspend fun isMovieFavorited(movieId: Int): Boolean {
-        return withContext(Dispatchers.Default) {
-            _favoriteList.value.any { it.id == movieId }
-        }
-    }
-    private fun refreshFavoriteMovies() {
-        viewModelScope.launch {
-            fetchFavoriteMovies()
-        }
+    fun isMovieFavorited(movieId: Int): Boolean {
+        return _favoriteList.value.any { it.id == movieId }
     }
 
     private fun fetchFavoriteMovies() {
@@ -51,13 +44,13 @@ class FavoriteMovieViewModel : ViewModel() {
         }
     }
 
-    fun toggleFavoriteMovie(movieId: Int, isFavorite: Boolean) {
+    fun toggleFavoriteMovie(movie: MoviesDetails, isFavorite: Boolean) {
         viewModelScope.launch {
-            val request = FavoriteMovieRequest(media_id = movieId, favorite = isFavorite)
+            val request = FavoriteMovieRequest(media_id = movie.id, favorite = isFavorite)
             try {
                 ApiService.create(ApiInterface::class.java)
                     .toggleFavroiteMovie(accountId, sessionId, request)
-                refreshFavoriteMovies()
+                _favoriteList.value = if(isFavorite) _favoriteList.value + movie else _favoriteList.value.filter { it.id != movie.id }
             } catch (e: Exception) {
                 Log.e("FavoriteMovieViewModel", "Error adding favorite movie: ${e.message}")
             }

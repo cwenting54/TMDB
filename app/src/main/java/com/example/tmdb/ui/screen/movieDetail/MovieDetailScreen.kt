@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -52,6 +53,7 @@ fun MovieDetailRoute(
     val moviesDetail by movieDetailViewModel.moviesDetail.collectAsState()
     MovieDetailScreen(
         moviesDetail,
+        movieId = movieId,
         navController = navController,
         favoriteMovieViewModel = favoriteMovieViewModel
     )
@@ -61,16 +63,16 @@ fun MovieDetailRoute(
 @Composable
 fun MovieDetailScreen(
     moviesDetail: MoviesDetails?,
+    movieId: Int,
     navController: NavHostController,
     favoriteMovieViewModel: FavoriteMovieViewModel
 ) {
     var isFavor by remember { mutableStateOf(false) }
-
-    LaunchedEffect(moviesDetail?.id) {
-        moviesDetail?.id?.let {
-            isFavor = favoriteMovieViewModel.isMovieFavorited(it)
-        }
+    val favoriteList by favoriteMovieViewModel.favoriteList.collectAsState()
+    LaunchedEffect(movieId, favoriteList.size) {
+        isFavor = favoriteMovieViewModel.isMovieFavorited(movieId)
     }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -80,6 +82,22 @@ fun MovieDetailScreen(
                         Icon(
                             painter = painterResource(R.drawable.arrow_back_ios_new_24),
                             contentDescription = stringResource(R.string.backPage)
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        moviesDetail?.let { movie ->
+                            val newFavorState = !isFavor
+                            favoriteMovieViewModel.toggleFavoriteMovie(movie, newFavorState)
+                            isFavor = newFavorState
+                        }
+                    }) {
+                        Icon(
+                            imageVector = if (isFavor == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = stringResource(R.string.favorite),
+                            tint = Color.Red,
+                            modifier = Modifier.size(40.dp)
                         )
                     }
                 })
@@ -92,12 +110,12 @@ fun MovieDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             AsyncImage(
-                model = ImageApi.getImageUrl(moviesDetail?.posterPath),
+                model = ImageApi.getImageUrl(moviesDetail?.backdropPath),
                 contentDescription = stringResource(R.string.moviePhoto),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(300.dp),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -114,19 +132,6 @@ fun MovieDetailScreen(
             Text(
                 text = moviesDetail?.overview ?: "",
             )
-            IconButton(onClick = {
-                moviesDetail?.id?.let { movieId ->
-                    val newFavorState = !(isFavor ?: false)
-                    favoriteMovieViewModel.toggleFavoriteMovie(movieId, newFavorState)
-                    isFavor = newFavorState
-                }
-            }) {
-                Icon(
-                    imageVector = if (isFavor == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = stringResource(R.string.favorite),
-                    tint = Color.Red
-                )
-            }
         }
     }
 }

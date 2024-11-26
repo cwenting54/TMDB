@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -134,7 +135,8 @@ fun MovieItem(
     favoriteMovieViewModel: FavoriteMovieViewModel
 ) {
     var isFavor by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    val favoriteList by favoriteMovieViewModel.favoriteList.collectAsState()
+    LaunchedEffect(Unit, favoriteList.size) {
         isFavor = favoriteMovieViewModel.isMovieFavorited(movie.id)
     }
 
@@ -157,7 +159,7 @@ fun MovieItem(
             IconButton(
                 onClick = {
                     val newFavorState = !isFavor
-                    favoriteMovieViewModel.toggleFavoriteMovie(movie.id, newFavorState)
+                    favoriteMovieViewModel.toggleFavoriteMovie(movie, newFavorState)
                     isFavor = newFavorState
                 },
                 modifier = Modifier
@@ -175,7 +177,9 @@ fun MovieItem(
         Text(
             text = movie.title,
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(4.dp)
+            modifier = Modifier
+                .padding(4.dp)
+                .heightIn(min = 48.dp),
         )
     }
 }
