@@ -24,8 +24,6 @@ class MovieDetailViewModel: ViewModel() {
     fun fetchMovieDetail(movieId: Int){
         viewModelScope.launch {
             _isLoading.value = true
-            _errorMessage.value = null
-
             try {
                 _moviesDetail.value = ApiService.create(ApiInterface::class.java).fetchMovieDetail(movieId)
             } catch (e: Exception) {

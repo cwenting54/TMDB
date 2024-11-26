@@ -1,33 +1,36 @@
 package com.example.tmdb.ui.screen.movie
 
+import android.net.NetworkCapabilities
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.tmdb.model.MoviesDetails
+import androidx.paging.cachedIn
 import com.example.tmdb.model.MoviesResponse
-import com.example.tmdb.network.ApiInterface
-import com.example.tmdb.network.ApiService
+import com.example.tmdb.repository.MovieRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
+import retrofit2.HttpException
+import java.io.IOException
 
-class MoviesViewModel : ViewModel() {
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _moviesList = MutableStateFlow<MoviesResponse?>(null)
-    val moviesList: StateFlow<MoviesResponse?> = _moviesList.asStateFlow()
+class MoviesViewModel(movieRepo: MovieRepository) : ViewModel() {
 
-    fun fetchMovies() {
-        viewModelScope.launch {
-            _errorMessage.value = null
+    val moviePagingFlow = movieRepo.getPopularMovies()
+        .cachedIn(viewModelScope)
 
-            try {
-                _moviesList.value = ApiService.create(ApiInterface::class.java).fetchMovieList()
-            } catch (e: Exception) {
-                _errorMessage.value = e.message
-            } finally {
+    companion object {
+        fun factory(movieRepo: MovieRepository): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    if (modelClass.isAssignableFrom(MoviesViewModel::class.java)) {
+                        return MoviesViewModel(movieRepo) as T
+                    }
+                    throw IllegalArgumentException("Unknown ViewModel class")
+                }
             }
         }
     }

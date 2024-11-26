@@ -1,17 +1,18 @@
 package com.example.tmdb.ui.screen.movie
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -39,32 +40,41 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.example.tmdb.R
 import com.example.tmdb.model.MoviesDetails
+import com.example.tmdb.network.ApiService
 import com.example.tmdb.network.ImageApi
+import com.example.tmdb.repository.MovieRepository
 import com.example.tmdb.ui.screen.favoriteMovie.FavoriteMovieViewModel
 
 
+object MovieRepositoryProvider {
+    val movieRepository: MovieRepository by lazy {
+        MovieRepository(ApiService)
+    }
+}
 @Composable
 fun MoviesRoute(
-    moviesViewModel: MoviesViewModel = viewModel(),
+    moviesViewModel: MoviesViewModel = viewModel(
+        factory = MoviesViewModel.factory(
+            movieRepo = MovieRepositoryProvider.movieRepository
+        )
+    ),
     favoriteMovieViewModel: FavoriteMovieViewModel,
     onItemClick: (Int) -> Unit = {}
 ) {
-    LaunchedEffect(Unit) {
-        moviesViewModel.fetchMovies()
-    }
-    val isLoading by favoriteMovieViewModel.isLoading.collectAsState()
-    val moviesResponse by moviesViewModel.moviesList.collectAsState()
-    val errorMessage by moviesViewModel.errorMessage.collectAsState()
 
+    val isLoading by favoriteMovieViewModel.isLoading.collectAsState()
+    val moviesPagingItems = moviesViewModel.moviePagingFlow.collectAsLazyPagingItems()
     MoviesScreen(
         isLoading = isLoading,
-        moviesResponse = moviesResponse?.results,
-        errorMessage = errorMessage,
+        moviesPagingItems = moviesPagingItems,
         onItemClick = onItemClick,
-        favoriteMovieViewModel = favoriteMovieViewModel
+        favoriteMovieViewModel = favoriteMovieViewModel,
     )
 }
 
@@ -73,54 +83,85 @@ fun MoviesRoute(
 @Composable
 fun MoviesScreen(
     isLoading: Boolean = true,
-    errorMessage: String?,
-    moviesResponse: List<MoviesDetails>? = listOf(),
+    moviesPagingItems: LazyPagingItems<MoviesDetails> ,
     onItemClick: (Int) -> Unit = {},
-    favoriteMovieViewModel: FavoriteMovieViewModel
+    favoriteMovieViewModel: FavoriteMovieViewModel,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.movieList)) })
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).padding(20.dp))
-            } else if (errorMessage != null) {
-                Text(text = "Error: $errorMessage", modifier = Modifier.align(Alignment.Center))
-            } else {
-                moviesResponse?.let { movies ->
-                    MovieList(movies, onItemClick, favoriteMovieViewModel)
-                } ?: run {
-                    Text(text = "No movies available", modifier = Modifier.align(Alignment.Center))
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            when {
+                moviesPagingItems.loadState.refresh is LoadState.Error-> {
+                    Text(
+                        text = (moviesPagingItems.loadState.refresh as LoadState.Error).error.message.orEmpty(),
+                        modifier = Modifier
+                            .padding(20.dp)
+                    )
+                }
+                isLoading || moviesPagingItems.loadState.refresh is LoadState.Loading-> {
+                    CircularProgressIndicator()
+                }
+                else -> {
+                    MovieList(moviesPagingItems, onItemClick, favoriteMovieViewModel)
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MovieList(
-    movies: List<MoviesDetails>,
+    moviesPagingItems: LazyPagingItems<MoviesDetails>,
     onItemClick: (Int) -> Unit,
     favoriteMovieViewModel: FavoriteMovieViewModel
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = Modifier.padding(8.dp)
     ) {
-        items(movies.chunked(2)) { moviePair ->
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                moviePair.forEach { movie ->
-                    MovieItem(
-                        modifier = Modifier
-                            .fillMaxWidth(0.5f),
-                        movie = movie,
-                        onItemClick = onItemClick,
-                        favoriteMovieViewModel = favoriteMovieViewModel
-                    )
+        items(moviesPagingItems.itemCount) { index ->
+            val movie = moviesPagingItems[index]
+            movie?.let {
+                MovieItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    movie = it,
+                    onItemClick = onItemClick,
+                    favoriteMovieViewModel = favoriteMovieViewModel
+                )
+            }
+        }
+
+        moviesPagingItems.apply {
+            when {
+                loadState.append is LoadState.Loading -> {
+                    item {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
+                loadState.append is LoadState.Error -> {
+                    item {
+                        Text(
+                            text = "加載錯誤，請重試",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .wrapContentWidth(Alignment.CenterHorizontally)
+                        )
+                    }
                 }
             }
         }
@@ -146,7 +187,7 @@ fun MovieItem(
             .padding(4.dp)
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp)
-        ) {
+    ) {
         Box {
             AsyncImage(
                 model = ImageApi.getImageUrl(movie.posterPath),
@@ -164,7 +205,7 @@ fun MovieItem(
                 },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top=8.dp)
+                    .padding(top = 8.dp)
             ) {
                 Icon(
                     imageVector = if (isFavor) Icons.Default.Favorite else Icons.Default.FavoriteBorder,

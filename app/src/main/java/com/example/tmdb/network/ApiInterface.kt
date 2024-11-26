@@ -14,6 +14,7 @@ interface ApiInterface {
 
     @GET("movie/popular")
     suspend fun fetchMovieList(
+        @Query("page") page: Int
     ): MoviesResponse
 
     @GET("movie/{movieId}")
