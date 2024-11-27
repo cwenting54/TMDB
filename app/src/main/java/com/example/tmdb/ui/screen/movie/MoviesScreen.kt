@@ -46,24 +46,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.example.tmdb.R
 import com.example.tmdb.model.MoviesDetails
-import com.example.tmdb.network.ApiService
 import com.example.tmdb.network.ImageApi
-import com.example.tmdb.repository.MovieRepository
 import com.example.tmdb.ui.screen.favoriteMovie.FavoriteMovieViewModel
 
 
-object MovieRepositoryProvider {
-    val movieRepository: MovieRepository by lazy {
-        MovieRepository(ApiService)
-    }
-}
 @Composable
 fun MoviesRoute(
-    moviesViewModel: MoviesViewModel = viewModel(
-        factory = MoviesViewModel.factory(
-            movieRepo = MovieRepositoryProvider.movieRepository
-        )
-    ),
+    moviesViewModel: MoviesViewModel = viewModel(),
     favoriteMovieViewModel: FavoriteMovieViewModel,
     onItemClick: (Int) -> Unit = {}
 ) {

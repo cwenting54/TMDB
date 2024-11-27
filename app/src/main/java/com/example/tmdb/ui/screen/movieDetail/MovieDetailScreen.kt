@@ -144,7 +144,7 @@ fun MovieDetailScreen(
                         text = moviesDetail.title,
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    Text(text = "Movie length: ${moviesDetail.runtime}分鐘")
+                    Text(text = "Movie length: ${moviesDetail.runtime} mins")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Rating: ${moviesDetail.voteAverage}")
                     Spacer(modifier = Modifier.height(8.dp))

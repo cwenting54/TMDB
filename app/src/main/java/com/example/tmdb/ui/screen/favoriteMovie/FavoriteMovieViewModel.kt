@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tmdb.BuildConfig
+import com.example.tmdb.ui.screen.base.SessionManager
 import com.example.tmdb.model.FavoriteMovieRequest
 import com.example.tmdb.model.MoviesDetails
 import com.example.tmdb.network.ApiInterface
@@ -16,8 +17,8 @@ import kotlinx.coroutines.launch
 class FavoriteMovieViewModel : ViewModel() {
     private val _favoriteList = MutableStateFlow(emptyList<MoviesDetails>())
     val favoriteList: StateFlow<List<MoviesDetails>> = _favoriteList.asStateFlow()
-    private val accountId = BuildConfig.accountId.toInt()
-    private val sessionId = BuildConfig.sessionId
+    private val accountId = SessionManager.accountId
+    private val sessionId = SessionManager.sessionId
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
