@@ -1,6 +1,5 @@
 package com.example.tmdb.network
 
-import com.example.tmdb.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.Response
 
